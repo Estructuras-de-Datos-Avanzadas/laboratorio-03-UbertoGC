@@ -8,9 +8,9 @@ private:
     float y;
 public:
     nodo_quadtree();
-    nodo_quadtree(float,float,int);
+    nodo_quadtree(float,float);
     void anadir(float,float,int,float,float,float,float);
-    void division();
+    void buscar(float,float,float,float);
     friend ostream& operator << (ostream &,const nodo_quadtree &);
     ~nodo_quadtree();
 };
@@ -20,12 +20,12 @@ nodo_quadtree::nodo_quadtree(){
     x=-1;
     y=-1;
 }
-nodo_quadtree::nodo_quadtree(float x_1,float y_1, int cuadrante_1)
+nodo_quadtree::nodo_quadtree(float x_1,float y_1)
 {
-    cuadrante=cuadrante_1;
-    hijos=nullptr;
-    x=x_1;
-    y=y_1;
+    cuadrante=-3;
+    hijos=new nodo_quadtree[4];
+    x=x_1/2;
+    y=y_1/2;
 }
 void nodo_quadtree::anadir(float x_1, float y_1, int cuad, float x_father, float y_father, float tamano_x, float tamano_y){
     if(this->hijos==nullptr){
@@ -87,24 +87,43 @@ void nodo_quadtree::anadir(float x_1, float y_1, int cuad, float x_father, float
         }
     }
 }
+void nodo_quadtree::buscar(float x_min, float y_min, float x_max, float y_max){
+    if(this->hijos==nullptr){
+        if(this->x>x_min && this->x<=x_max && this->y>y_min && this->y<=y_max)
+            cout<<"("<<this->x<<" , "<<this->y<<")"<<endl;
+    }
+    else{
+        if(x_min<this->x){
+            if(y_min<this->y){
+                this->hijos[0].buscar(x_min,y_min,x_max,y_max);
+            }
+            if(y_max>=this->y){
+                this->hijos[2].buscar(x_min,y_min,x_max,y_max);
+            }
+        }
+        if(x_max>=this->x){
+            if(y_min<this->y){
+                this->hijos[1].buscar(x_min,y_min,x_max,y_max);
+            }
+            if(y_max>=this->y){
+                this->hijos[3].buscar(x_min,y_min,x_max,y_max);
+            }
+        }
+    }
+}
 ostream& operator << (ostream &o,const nodo_quadtree &a){
-    o<<"Valor ("<<a.x<<" , "<<a.y<<")"<<endl;
     if(a.hijos!=nullptr){
-        o<<"Hijos (x , y): ";
         for (int i = 0; i < 4; i++){
-            o<<"("<<a.hijos[i].x<<" , "<<a.hijos[i].y<<")";
-            if(i<3){
-                o<<" ; ";
-            }
-            else{
-                o<<endl;
-            }
+            o<<char(34)<<a.x<<" - "<<a.y<<char(34)<<" -> ";
+            if(a.hijos[i].x==-1)
+                o<<"void"<<i<<"_"<<a.x<<a.y<<"; ";
+            else
+                o<<char(34)<<a.hijos[i].x<<" - "<<a.hijos[i].y<<char(34)<<"; ";
         }
-        for (int i = 0; i < 4; i++){
-            if(a.hijos[i].x!=-1 && a.hijos[i].hijos!=nullptr){
+        o<<endl;
+        for (int i = 0; i < 4; i++)
+            if(a.hijos[i].x!=-1 && a.hijos[i].hijos!=nullptr)
                 o<<a.hijos[i];
-            }
-        }
     }
     return o;
 }
@@ -120,6 +139,7 @@ private:
 public:
     quadtree(float, float);
     void anadir(float, float);
+    void buscar(float,float,float,float);
     friend ostream& operator<<(ostream&, const quadtree &);
     ~quadtree();
 };
@@ -127,10 +147,14 @@ quadtree::quadtree(float x, float y)
 {
     ancho=x;
     largo=y;
-    raiz=new nodo_quadtree();
+    raiz=new nodo_quadtree(x,y);
 }
 void quadtree::anadir(float x, float y){
     raiz->anadir(x,y,13,0,0,ancho,largo);
+}
+void quadtree::buscar(float x_min, float y_min, float x_max, float y_max){
+    raiz->buscar(x_min,y_min,x_max,y_max);
+    cout << "------------------------------------------------------"<<endl;
 }
 ostream& operator<< (ostream &o,const quadtree &a){
     o << "Ancho: " << a.ancho << ", Largo: " << a.largo <<endl;
@@ -142,18 +166,14 @@ quadtree::~quadtree()
 {
     delete[] raiz;
 }
-
 int main(){
-    quadtree alfa(800,600);
-    alfa.anadir(100,200);
-    alfa.anadir(330,450);
-    alfa.anadir(710,500);
-    alfa.anadir(640,100);
-    alfa.anadir(80,60);
-    alfa.anadir(560,200);
-    alfa.anadir(440,230);
-    /*añadiendo*/
-    alfa.anadir(530,220);
+    quadtree alfa(6400,4800);
+    for (int i = 0; i < 50; i++){
+        float x=rand()%6400+1;
+        float y=rand()%4800+1;
+        alfa.anadir(x,y);
+    }
     cout<<alfa;
+    alfa.buscar(1600,1200,4800,3600);
     return 0;
 }
